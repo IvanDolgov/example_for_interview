@@ -1,0 +1,40 @@
+version: '3.1'
+
+services:
+  web:
+    image: docker-flask
+    ports:
+      - '8000:5000'
+    healthcheck:
+      test: curl --fail -s http://localhost:5000/ || exit 1
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    hostname: prometheus
+    restart: always
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    depends_on:
+      - web
+
+  grafana:
+      image: grafana/grafana
+      container_name: grafana
+      hostname: grafana
+      restart: always
+      ports:
+        - "3000:3000"
+      volumes:
+        - ./grafana/config.ini:/etc/grafana/grafana.ini
+        - ./grafana/datasources.yml:/etc/grafana/provisioning/datasources/default.yaml
+        - ./grafana/dashboard.yml:/etc/grafana/provisioning/dashboards/default.yaml
+        - ./grafana/dashboards:/var/lib/grafana/dashboards
+      depends_on:
+        - prometheus
+
